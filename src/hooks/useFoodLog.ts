@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export interface FoodItem {
   name: string;
@@ -11,7 +11,16 @@ export interface FoodItem {
 }
 
 export const useFoodLog = () => {
-  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  // Load food items from localStorage on initial render
+  const [foodItems, setFoodItems] = useState<FoodItem[]>(() => {
+    const savedItems = localStorage.getItem('foodItems');
+    return savedItems ? JSON.parse(savedItems) : [];
+  });
+
+  // Save to localStorage whenever foodItems changes
+  useEffect(() => {
+    localStorage.setItem('foodItems', JSON.stringify(foodItems));
+  }, [foodItems]);
 
   const addFoodItem = (item: FoodItem) => {
     setFoodItems(prev => [item, ...prev]);

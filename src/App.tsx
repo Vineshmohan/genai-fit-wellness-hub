@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ProfileSetup from "./pages/ProfileSetup";
 import Dashboard from "./pages/Dashboard";
+import Workouts from "./pages/Workouts";
+import Nutrition from "./pages/Nutrition";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/workouts" element={<Workouts />} />
+          <Route path="/nutrition" element={<Nutrition />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
