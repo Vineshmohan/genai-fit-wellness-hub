@@ -1,24 +1,25 @@
-# Welcome to your Lovable project
+# Welcome to GenAI-Fit: Personalized AI-Powered Fitness & Nutrition Platform project
 
-## Project info
+Project Setup Instructions:
+To run this project on VS Code:
 
-**URL**: https://lovable.dev/projects/acaa34c5-e9e2-4133-80b5-f68afd036c34
+Install VS Code (if not already installed): Download from https://code.visualstudio.com/
 
-## How can I edit this code?
+Clone the repository and open in VS Code:
 
-There are several ways of editing your application.
+Use git clone [repository-url] or download the project
+Open VS Code and select "Open Folder" to navigate to your project
+Install Node.js and npm (if not already installed):
 
-**Use Lovable**
+Download from https://nodejs.org/ (LTS version recommended)
+Install project dependencies:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/acaa34c5-e9e2-4133-80b5-f68afd036c34) and start prompting.
+Open a terminal in VS Code (Terminal > New Terminal)
+Run npm install or yarn install
+Start the development server:
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Run npm run dev or yarn dev
+The application will be available at http://localhost:5173 (or similar port)
 
 Follow these steps:
 
@@ -53,21 +54,19 @@ npm run dev
 ## What technologies are used for this project?
 
 This project is built with:
+Frontend Framework: React with TypeScript
+Routing: React Router DOM
+Styling: Tailwind CSS for utility-first styling
+UI Components: shadcn/ui (based on Radix UI)
+Data Visualization: Recharts for graphs and charts
+State Management: React Query for server state
+Icons: Lucide React for modern iconography
+Build Tool: Vite for fast development and optimized builds
+Form Handling: React Hook Form
+Notifications: Toast components for user feedback
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/acaa34c5-e9e2-4133-80b5-f68afd036c34) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
+The project is a comprehensive fitness and nutrition application with features for tracking workouts, meals, progress, and communicating with an AI coach.
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
