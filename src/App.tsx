@@ -15,6 +15,8 @@ import Workouts from "./pages/Workouts";
 import Nutrition from "./pages/Nutrition";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
+import Schedule from "./pages/Schedule";
+import MealPlanner from "./pages/MealPlanner";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const AppWithProviders = () => (
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/workouts" element={<Workouts />} />
       <Route path="/nutrition" element={<Nutrition />} />
+      <Route path="/schedule" element={<Schedule />} />
+      <Route path="/meal-planner" element={<MealPlanner />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     <Footer />

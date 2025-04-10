@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ const NutritionPage = () => {
   const [showFoodLog, setShowFoodLog] = useState(false);
   const { foodItems, addFoodItem } = useFoodLog();
   
-  // Real-time nutrition data for the day
   const [dailyNutrition, setDailyNutrition] = useState({
     calories: {
       consumed: 1350,
@@ -34,11 +32,9 @@ const NutritionPage = () => {
     }
   });
 
-  // Update nutrition values when food is logged
   const handleAddFood = (food: any) => {
     addFoodItem(food);
     
-    // Update nutrition data
     setDailyNutrition(prev => ({
       calories: {
         consumed: prev.calories.consumed + food.calories,
@@ -127,6 +123,41 @@ const NutritionPage = () => {
 
   const calculatePercentage = (consumed: number, goal: number) => {
     return Math.min(Math.round((consumed / goal) * 100), 100);
+  };
+
+  const downloadShoppingList = () => {
+    let content = "GenAI-Fit Shopping List\n\n";
+    
+    const categories = [...new Set(groceryItems.map(item => item.category))];
+    
+    categories.forEach(category => {
+      content += `${category}:\n`;
+      
+      groceryItems
+        .filter(item => item.category === category)
+        .forEach(item => {
+          content += `- ${item.name}: ${item.quantity}\n`;
+        });
+      
+      content += '\n';
+    });
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `genaifit-shopping-list-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Shopping List Downloaded",
+      description: "Your shopping list has been downloaded as a text file",
+    });
   };
 
   return (
@@ -361,7 +392,9 @@ const NutritionPage = () => {
                     </div>
                   </div>
                 ))}
-                <Button className="w-full" variant="outline">Download Shopping List</Button>
+                <Button className="w-full" variant="outline" onClick={downloadShoppingList}>
+                  Download Shopping List
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -411,7 +444,13 @@ const NutritionPage = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full" variant="outline">View Full Week</Button>
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => window.location.href = '/meal-planner'}
+                >
+                  View Full Week
+                </Button>
               </div>
             </CardContent>
           </Card>
