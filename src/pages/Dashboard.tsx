@@ -1,13 +1,15 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Activity, Award, Dumbbell, MessageSquare, Plus, Utensils, Zap } from 'lucide-react';
+import { Activity, Award, Database, Download, Dumbbell, FileText, MessageSquare, Plus, Utensils, Zap } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import FoodLogForm from '@/components/FoodLogForm';
+import { useFoodLog } from '@/hooks/useFoodLog';
 
-// Mock data
 const mockWeightData = [
   { day: 'Mon', weight: 85.3 },
   { day: 'Tue', weight: 85.1 },
@@ -82,11 +84,79 @@ const mockMeals = [
 const Dashboard = () => {
   const [waterIntake, setWaterIntake] = useState<number>(3);
   const waterGoal = 8;
+  const { toast } = useToast();
+  const [chatMessage, setChatMessage] = useState<string>("");
+  const [chatMessages, setChatMessages] = useState<Array<{text: string, isUser: boolean}>>([
+    {text: "Hello! I'm your AI fitness coach. How can I help you today?", isUser: false}
+  ]);
+  const [showFoodLog, setShowFoodLog] = useState<boolean>(false);
+  const { foodItems, addFoodItem } = useFoodLog();
 
   const increaseWaterIntake = () => {
     if (waterIntake < waterGoal) {
       setWaterIntake(waterIntake + 1);
+      toast({
+        title: "Water intake logged",
+        description: `${waterIntake + 1} of ${waterGoal} glasses completed`,
+      });
     }
+  };
+
+  const handleChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessage.trim()) return;
+    
+    const newUserMessage = {text: chatMessage, isUser: true};
+    setChatMessages(prev => [...prev, newUserMessage]);
+    
+    setTimeout(() => {
+      let response = "";
+      
+      if (chatMessage.toLowerCase().includes("tired")) {
+        response = "Post-workout fatigue could be due to several factors: nutrition, hydration, sleep quality, or overtraining. I notice your protein intake has been below target for the past week, and your sleep data shows less than 7 hours on average. Try increasing protein and aiming for 7-8 hours of sleep.";
+      } else if (chatMessage.toLowerCase().includes("diet") || chatMessage.toLowerCase().includes("nutrition")) {
+        response = "Based on your goals and activity level, I recommend focusing on protein-rich foods and complex carbohydrates. Your current macro split looks good, but you could increase protein intake by about 10g per day for better muscle recovery.";
+      } else if (chatMessage.toLowerCase().includes("workout") || chatMessage.toLowerCase().includes("exercise")) {
+        response = "Your current workout plan is well-balanced. I notice you've been consistent with your strength training. Consider adding one more day of mobility work to improve recovery and prevent injuries.";
+      } else {
+        response = "Thanks for your question. Based on your recent activity and goals, I'd recommend focusing on consistency with your workouts and ensuring adequate protein intake. What specific aspect of your fitness journey would you like more guidance on?";
+      }
+      
+      setChatMessages(prev => [...prev, {text: response, isUser: false}]);
+    }, 1000);
+    
+    setChatMessage("");
+  };
+
+  const handleDownloadReport = () => {
+    toast({
+      title: "Report Generated",
+      description: "Your fitness report has been downloaded",
+    });
+    const dummyData = JSON.stringify({
+      user: "Alex",
+      weight: mockWeightData,
+      meals: mockMeals,
+      waterIntake: waterIntake,
+      date: new Date().toISOString()
+    }, null, 2);
+    
+    const blob = new Blob([dummyData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fitness-report.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleConnectDatabase = () => {
+    toast({
+      title: "Database Connected",
+      description: "Your fitness data is now being synced",
+    });
   };
 
   return (
@@ -97,18 +167,37 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, Alex</h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">Here's an overview of your fitness journey</p>
           </div>
-          <div className="mt-4 md:mt-0 flex gap-3">
+          <div className="mt-4 md:mt-0 flex gap-3 flex-wrap">
             <Button className="bg-fitness-500 hover:bg-fitness-600">
               <Plus className="mr-2 h-4 w-4" /> Log Workout
             </Button>
-            <Button variant="outline">
-              <MessageSquare className="mr-2 h-4 w-4" /> Ask AI Coach
+            <Button variant="outline" onClick={() => setShowFoodLog(true)}>
+              <Utensils className="mr-2 h-4 w-4" /> Log Food
+            </Button>
+            <Button variant="outline" onClick={handleDownloadReport}>
+              <Download className="mr-2 h-4 w-4" /> Download Report
+            </Button>
+            <Button variant="outline" onClick={handleConnectDatabase}>
+              <Database className="mr-2 h-4 w-4" /> Sync Database
             </Button>
           </div>
         </div>
 
+        {showFoodLog && (
+          <div className="mb-8">
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle>Log Your Food</CardTitle>
+                <CardDescription>Track your nutrition intake</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FoodLogForm onSubmit={addFoodItem} onClose={() => setShowFoodLog(false)} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {/* Progress Card */}
           <Card className="col-span-1 shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-md font-medium">Goal Progress</CardTitle>
@@ -132,7 +221,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Today's Stats */}
           <Card className="col-span-1 shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-md font-medium">Today's Stats</CardTitle>
@@ -172,7 +260,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Water Intake */}
           <Card className="col-span-1 shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-md font-medium">Water Intake</CardTitle>
@@ -211,7 +298,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* AI Recommendations */}
           <Card className="col-span-1 shadow-md bg-gradient-to-br from-fitness-500/90 to-fitness-600 text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-md font-medium">AI Coach Insights</CardTitle>
@@ -240,7 +326,6 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Charts Section */}
           <Card className="col-span-2 shadow-md">
             <CardHeader>
               <CardTitle>Weekly Progress</CardTitle>
@@ -314,7 +399,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Workout Plan Card */}
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle>Today's Workouts</CardTitle>
@@ -352,14 +436,54 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Meal Plan */}
           <Card className="shadow-md">
             <CardHeader>
-              <CardTitle>Today's Meal Plan</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Today's Meal Plan</span>
+                <Button variant="ghost" size="sm" className="text-sm" onClick={() => setShowFoodLog(true)}>
+                  <Plus className="mr-1 h-4 w-4" /> Log Food
+                </Button>
+              </CardTitle>
               <CardDescription>Nutrition recommendations for your goals</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {foodItems.length > 0 ? (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold mb-2">Your Logged Food</h3>
+                    {foodItems.map((item, idx) => (
+                      <div key={idx} className="flex p-3 mb-2 rounded-lg border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20">
+                        <div className="rounded-full w-10 h-10 flex items-center justify-center mr-3 bg-green-100 text-green-600">
+                          <Utensils className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <div>
+                              <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{item.mealType}</span>
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">{item.calories} cal</span>
+                          </div>
+                          <div className="flex space-x-3 mt-2">
+                            <div className="text-xs">
+                              <span className="text-red-500 font-medium">{item.protein}g</span>
+                              <span className="text-gray-500 dark:text-gray-400"> protein</span>
+                            </div>
+                            <div className="text-xs">
+                              <span className="text-blue-500 font-medium">{item.carbs}g</span>
+                              <span className="text-gray-500 dark:text-gray-400"> carbs</span>
+                            </div>
+                            <div className="text-xs">
+                              <span className="text-yellow-500 font-medium">{item.fat}g</span>
+                              <span className="text-gray-500 dark:text-gray-400"> fat</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                
                 {mockMeals.map((meal, index) => (
                   <div key={index} className="flex p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="rounded-full w-10 h-10 flex items-center justify-center mr-3 bg-nutrition-100 text-nutrition-600">
@@ -390,17 +514,10 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ))}
-                <div className="flex justify-between pt-3">
-                  <Button variant="ghost" size="sm" className="text-sm">
-                    <Plus className="mr-1 h-4 w-4" /> Log Food
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-sm">View Full Plan</Button>
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* AI Chat Placeholder */}
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle>Ask Your AI Fitness Coach</CardTitle>
@@ -409,35 +526,35 @@ const Dashboard = () => {
             <CardContent>
               <div className="h-[320px] flex flex-col">
                 <div className="flex-1 overflow-y-auto mb-4 space-y-4">
-                  <div className="flex">
-                    <div className="bg-fitness-100 text-fitness-800 p-3 rounded-lg max-w-[80%]">
-                      <p className="text-sm">Hello! I'm your AI fitness coach. How can I help you today?</p>
+                  {chatMessages.map((msg, index) => (
+                    <div key={index} className={`flex ${msg.isUser ? 'justify-end' : ''}`}>
+                      <div className={`p-3 rounded-lg max-w-[80%] ${
+                        msg.isUser 
+                          ? 'bg-gray-100 dark:bg-gray-700' 
+                          : 'bg-fitness-100 text-fitness-800'
+                      }`}>
+                        <p className="text-sm">{msg.text}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg max-w-[80%]">
-                      <p className="text-sm">I've been feeling tired after my workouts. Any advice?</p>
-                    </div>
-                  </div>
-                  <div className="flex">
-                    <div className="bg-fitness-100 text-fitness-800 p-3 rounded-lg max-w-[80%]">
-                      <p className="text-sm">Post-workout fatigue could be due to several factors: nutrition, hydration, sleep quality, or overtraining. Let's check your recent patterns:</p>
-                      <p className="text-sm mt-2">I notice your protein intake has been below target for the past week, and your sleep data shows less than 7 hours on average. Both can affect recovery. Try increasing protein and aiming for 7-8 hours of sleep.</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-                <div className="relative">
-                  <input
+                <form onSubmit={handleChatSubmit} className="relative">
+                  <Input
                     type="text"
                     placeholder="Ask me anything about fitness or nutrition..."
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg py-2 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-fitness-500 focus:border-transparent"
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
                   />
-                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-fitness-500 hover:text-fitness-600">
+                  <button 
+                    type="submit" 
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-fitness-500 hover:text-fitness-600"
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
                     </svg>
                   </button>
-                </div>
+                </form>
               </div>
             </CardContent>
           </Card>
