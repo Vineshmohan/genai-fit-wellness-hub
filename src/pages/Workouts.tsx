@@ -1,269 +1,229 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dumbbell, Calendar, Clock, Flame } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, Dumbbell, Flame } from "lucide-react";
+import { WorkoutProvider, useWorkouts } from "@/contexts/WorkoutContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface WorkoutItem {
-  id: number;
-  title: string;
-  duration: string;
-  calories: number;
-  completed: boolean;
-  type: string;
-  description: string;
-}
-
-const Workouts = () => {
-  const { toast } = useToast();
-  const [workouts, setWorkouts] = useState<WorkoutItem[]>([
-    {
-      id: 1,
-      title: "Full Body HIIT",
-      duration: "30 min",
-      calories: 320,
-      completed: false,
-      type: "HIIT",
-      description: "High-intensity interval training that targets all major muscle groups."
-    },
-    {
-      id: 2,
-      title: "Upper Body Strength",
-      duration: "45 min",
-      calories: 280,
-      completed: false,
-      type: "Strength",
-      description: "Focus on chest, back, shoulders, and arms with progressive resistance."
-    },
-    {
-      id: 3,
-      title: "Morning Yoga Flow",
-      duration: "20 min",
-      calories: 150,
-      completed: false,
-      type: "Yoga",
-      description: "Gentle flow to improve flexibility, balance, and mindfulness."
-    },
-    {
-      id: 4,
-      title: "Lower Body Power",
-      duration: "40 min",
-      calories: 350,
-      completed: false,
-      type: "Strength",
-      description: "Target legs, glutes, and core with compound movements."
-    },
-    {
-      id: 5,
-      title: "Cardio Blast",
-      duration: "25 min",
-      calories: 290,
-      completed: false,
-      type: "Cardio",
-      description: "High-energy cardio session to boost endurance and burn calories."
-    }
-  ]);
-
-  const startWorkout = (id: number) => {
-    toast({
-      title: "Workout Started",
-      description: "Your workout timer has begun. Good luck!",
-    });
-    
-    // In a real app, this would start a timer and perhaps connect to wearable devices
-    console.log(`Starting workout ${id}`);
-  };
-
-  const completeWorkout = (id: number) => {
-    setWorkouts(workouts.map(workout => 
-      workout.id === id ? { ...workout, completed: true } : workout
-    ));
-    
-    toast({
-      title: "Workout Completed",
-      description: "Great job! Your progress has been recorded.",
-    });
-  };
-
-  const getTodaysDate = () => {
-    const date = new Date();
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
+const WorkoutSchedule = () => {
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Your Workout Plan</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">Personalized training for your goals</p>
+    <div className="space-y-4">
+      <div className="flex items-center">
+        <Calendar className="mr-2 h-5 w-5 text-fitness-500" />
+        <h3 className="text-lg font-medium">Weekly Schedule</h3>
+      </div>
+      
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center">
+            <Badge variant="outline" className="mr-2">MON</Badge>
+            <span className="font-medium">Upper Body Focus</span>
+          </div>
+          <Badge variant="secondary">Scheduled</Badge>
         </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center">
+            <Badge variant="outline" className="mr-2">WED</Badge>
+            <span className="font-medium">Core Crusher</span>
+          </div>
+          <Badge variant="secondary">Scheduled</Badge>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center">
+            <Badge variant="outline" className="mr-2">FRI</Badge>
+            <span className="font-medium">Full Body HIIT</span>
+          </div>
+          <Badge variant="secondary">Scheduled</Badge>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center">
+            <Badge variant="outline" className="mr-2">SUN</Badge>
+            <span className="font-medium">Recovery / Light Cardio</span>
+          </div>
+          <Badge variant="secondary">Scheduled</Badge>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-        <div className="mb-8">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="mr-2 h-5 w-5 text-fitness-500" />
-                Today's Workouts
-              </CardTitle>
-              <CardDescription>{getTodaysDate()}</CardDescription>
+const WorkoutList = () => {
+  const { workouts, isLoading, error, startWorkout, completeWorkout } = useWorkouts();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <Card key={i} className="border-light">
+            <CardHeader className="pb-2">
+              <Skeleton className="h-6 w-2/3" />
+              <Skeleton className="h-4 w-1/3" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {workouts.map((workout) => (
-                  <div key={workout.id} className="flex flex-col sm:flex-row sm:items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className={`rounded-full w-10 h-10 flex items-center justify-center mb-3 sm:mb-0 mr-0 sm:mr-4 ${
-                      workout.type === "HIIT" ? "bg-red-100 text-red-600" :
-                      workout.type === "Strength" ? "bg-blue-100 text-blue-600" :
-                      workout.type === "Yoga" ? "bg-green-100 text-green-600" :
-                      "bg-purple-100 text-purple-600"
-                    }`}>
-                      <Dumbbell className="h-5 w-5" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-10 w-full" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-light bg-red-50">
+        <CardHeader>
+          <CardTitle>Error</CardTitle>
+          <CardDescription>Failed to load workouts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>{error}</p>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" onClick={() => window.location.reload()}>Try Again</Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {workouts.map((workout) => (
+        <Card key={workout.id} className={`border-light ${workout.completed ? 'bg-gray-50' : ''}`}>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle>{workout.title}</CardTitle>
+              {workout.completed && (
+                <Badge variant="success">Completed</Badge>
+              )}
+            </div>
+            <CardDescription className="flex items-center mt-1">
+              <Clock className="h-4 w-4 mr-1" />
+              {workout.duration} minutes
+              <Flame className="h-4 w-4 ml-3 mr-1" />
+              {workout.calories} calories
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-32 rounded-md border p-2">
+              <div className="space-y-2">
+                {workout.exercises.map((exercise, idx) => (
+                  <div key={idx} className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Dumbbell className="h-4 w-4 mr-2 text-fitness-500" />
+                      <span>{exercise.name}</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white">{workout.title}</h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{workout.description}</p>
-                        </div>
-                        <div className="flex items-center mt-2 sm:mt-0 space-x-2">
-                          <div className="flex items-center text-gray-500 dark:text-gray-400">
-                            <Clock className="h-4 w-4 mr-1" />
-                            <span className="text-xs">{workout.duration}</span>
-                          </div>
-                          <div className="flex items-center text-gray-500 dark:text-gray-400">
-                            <Flame className="h-4 w-4 mr-1" />
-                            <span className="text-xs">{workout.calories} cal</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex justify-end mt-3 space-x-2">
-                        {!workout.completed ? (
-                          <Button 
-                            variant="default" 
-                            size="sm" 
-                            className="bg-fitness-500 hover:bg-fitness-600"
-                            onClick={() => startWorkout(workout.id)}
-                          >
-                            Start
-                          </Button>
-                        ) : null}
-                        {!workout.completed ? (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => completeWorkout(workout.id)}
-                          >
-                            Complete
-                          </Button>
-                        ) : (
-                          <Button variant="ghost" size="sm" className="text-green-600" disabled>
-                            Completed
-                          </Button>
-                        )}
-                      </div>
+                    <div className="text-sm text-gray-500">
+                      {exercise.sets} sets × {exercise.reps} reps
                     </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </ScrollArea>
+          </CardContent>
+          <CardFooter className="pt-0">
+            {workout.completed ? (
+              <Button variant="outline" className="w-full" disabled>
+                Completed
+              </Button>
+            ) : (
+              <div className="flex space-x-2 w-full">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => startWorkout(workout.id)}
+                >
+                  Start
+                </Button>
+                <Button 
+                  className="flex-1 bg-fitness-500 hover:bg-fitness-600"
+                  onClick={() => completeWorkout(workout.id)}
+                >
+                  Complete
+                </Button>
+              </div>
+            )}
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+};
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="shadow-md">
+const WorkoutsContent = () => {
+  return (
+    <div className="container px-4 py-6 mx-auto max-w-7xl">
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="md:w-3/4">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">My Workouts</h1>
+            <p className="text-gray-600">Track your fitness journey and stay on target</p>
+          </div>
+          
+          <Tabs defaultValue="today" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="today">Today</TabsTrigger>
+              <TabsTrigger value="all">All Workouts</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="today" className="space-y-4">
+              <WorkoutList />
+            </TabsContent>
+            
+            <TabsContent value="all" className="space-y-4">
+              <WorkoutList />
+            </TabsContent>
+            
+            <TabsContent value="completed" className="space-y-4">
+              <WorkoutList />
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <div className="md:w-1/4">
+          <Card className="border-light">
             <CardHeader>
               <CardTitle>Weekly Plan</CardTitle>
-              <CardDescription>Your upcoming workouts</CardDescription>
+              <CardDescription>Your scheduled workouts</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Tomorrow</h3>
-                  <div className="flex items-center">
-                    <div className="rounded-full w-8 h-8 flex items-center justify-center mr-2 bg-purple-100 text-purple-600">
-                      <Dumbbell className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Core Strength & Stability</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">35 min • 260 cal</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Day After Tomorrow</h3>
-                  <div className="flex items-center">
-                    <div className="rounded-full w-8 h-8 flex items-center justify-center mr-2 bg-blue-100 text-blue-600">
-                      <Dumbbell className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">HIIT Cardio Mix</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">25 min • 310 cal</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button className="w-full" variant="outline">View Full Schedule</Button>
-              </div>
+              <WorkoutSchedule />
             </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Weekly Progress</CardTitle>
-              <CardDescription>Your workout consistency</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                    <div key={i} className="text-xs font-medium text-gray-500 dark:text-gray-400">{day}</div>
-                  ))}
-                  
-                  {[true, true, true, false, false, null, null].map((completed, i) => (
-                    <div key={i} className={`h-8 rounded-md flex items-center justify-center ${
-                      completed === true ? 'bg-fitness-500 text-white' : 
-                      completed === false ? 'bg-gray-200 dark:bg-gray-700' : 
-                      'border border-dashed border-gray-300 dark:border-gray-600'
-                    }`}>
-                      {completed === true && (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="pt-4">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Week's Stats</p>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Workouts</p>
-                      <p className="text-lg font-bold text-fitness-600">3/7</p>
-                    </div>
-                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Minutes</p>
-                      <p className="text-lg font-bold text-fitness-600">95</p>
-                    </div>
-                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Calories</p>
-                      <p className="text-lg font-bold text-fitness-600">750</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full">
+                Edit Schedule
+              </Button>
+            </CardFooter>
           </Card>
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrap the main content with the WorkoutProvider
+const Workouts = () => {
+  return (
+    <WorkoutProvider>
+      <WorkoutsContent />
+    </WorkoutProvider>
   );
 };
 

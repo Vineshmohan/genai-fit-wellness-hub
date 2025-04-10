@@ -14,8 +14,26 @@ import Dashboard from "./pages/Dashboard";
 import Workouts from "./pages/Workouts";
 import Nutrition from "./pages/Nutrition";
 import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
+
+const AppWithProviders = () => (
+  <AuthProvider>
+    <Navbar />
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/profile-setup" element={<ProfileSetup />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/workouts" element={<Workouts />} />
+      <Route path="/nutrition" element={<Nutrition />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+    <Footer />
+  </AuthProvider>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -23,18 +41,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/profile-setup" element={<ProfileSetup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/workouts" element={<Workouts />} />
-          <Route path="/nutrition" element={<Nutrition />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Footer />
+        <AppWithProviders />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -6,32 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Use the login function from our auth context
+      const success = await login(email, password);
       
-      // For demo purposes, let's accept any non-empty values
-      if (email && password) {
-        toast({
-          title: "Login successful",
-          description: "Welcome back to GenAI-Fit!",
-        });
+      if (success) {
         navigate('/dashboard');
-      } else {
-        throw new Error("Please enter both email and password");
       }
     } catch (error) {
       toast({
@@ -39,8 +32,6 @@ const Login = () => {
         description: error instanceof Error ? error.message : "Please check your credentials and try again",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -128,6 +119,15 @@ const Login = () => {
             </p>
           </div>
         </form>
+        
+        {/* Demo credentials notice */}
+        <div className="border-t pt-4 mt-6">
+          <p className="text-sm text-center text-gray-500">
+            Demo credentials: 
+            <code className="mx-1 p-1 bg-gray-100 rounded">demo@genaifit.com</code> / 
+            <code className="mx-1 p-1 bg-gray-100 rounded">password123</code>
+          </p>
+        </div>
       </div>
     </div>
   );
