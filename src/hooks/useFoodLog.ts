@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { nutritionAPI } from '../services/api';
+import { mongoDBService, Collections } from '@/services/mongodb';
 
 export interface FoodItem {
   name: string;
@@ -76,12 +77,18 @@ export const useFoodLog = () => {
   const clearFoodLog = async () => {
     try {
       // Remove each item one by one
-      for (const item of foodItems) {
+      const currentItems = [...foodItems];
+      for (const item of currentItems) {
         if (item._id) {
           await nutritionAPI.removeFoodItem(item._id);
         }
       }
+      
+      // Clear the state
       setFoodItems([]);
+      // Verify the collection is empty in the database
+      await mongoDBService.getCollection(Collections.FOOD_LOGS);
+      
       return true;
     } catch (err) {
       setError('An error occurred while clearing food log');

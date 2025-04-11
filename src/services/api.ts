@@ -1,3 +1,4 @@
+
 // GenAI-Fit API service
 // This simulates a real backend but uses MongoDB service
 import { mongoDBService, Collections } from './mongodb';
@@ -197,10 +198,111 @@ export const nutritionAPI = {
     
     const result = await mongoDBService.deleteDocument(Collections.FOOD_LOGS, id);
     if (result.success) {
-      return await mongoDBService.getCollection(Collections.FOOD_LOGS);
+      return result;
     }
     
     return { success: false, message: 'Failed to remove food item' };
+  }
+};
+
+// Schedule API
+export const scheduleAPI = {
+  getSchedule: async () => {
+    await delay(600);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    return await mongoDBService.getCollection(Collections.SCHEDULES);
+  },
+  
+  addScheduleItem: async (item: any) => {
+    await delay(400);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    const result = await mongoDBService.insertDocument(Collections.SCHEDULES, item);
+    if (result.success) {
+      return await mongoDBService.getCollection(Collections.SCHEDULES);
+    }
+    
+    return { success: false, message: 'Failed to add schedule item' };
+  },
+  
+  removeScheduleItem: async (id: string) => {
+    await delay(400);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    const result = await mongoDBService.deleteDocument(Collections.SCHEDULES, id);
+    if (result.success) {
+      return result;
+    }
+    
+    return { success: false, message: 'Failed to remove schedule item' };
+  },
+  
+  updateScheduleItem: async (id: string, data: any) => {
+    await delay(500);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    const result = await mongoDBService.updateDocument(Collections.SCHEDULES, id, data);
+    if (result.success) {
+      return { success: true, data: result.data };
+    }
+    
+    return { success: false, message: 'Failed to update schedule item' };
+  }
+};
+
+// Meal Plan API
+export const mealPlanAPI = {
+  getMealPlan: async () => {
+    await delay(600);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    return await mongoDBService.getCollection(Collections.MEAL_PLANS);
+  },
+  
+  addMealPlanItem: async (item: any) => {
+    await delay(400);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    const result = await mongoDBService.insertDocument(Collections.MEAL_PLANS, item);
+    if (result.success) {
+      return await mongoDBService.getCollection(Collections.MEAL_PLANS);
+    }
+    
+    return { success: false, message: 'Failed to add meal plan item' };
+  },
+  
+  removeMealPlanItem: async (id: string) => {
+    await delay(400);
+    
+    if (!authAPI.isAuthenticated()) {
+      return { success: false, message: 'Authentication required' };
+    }
+    
+    const result = await mongoDBService.deleteDocument(Collections.MEAL_PLANS, id);
+    if (result.success) {
+      return result;
+    }
+    
+    return { success: false, message: 'Failed to remove meal plan item' };
   }
 };
 
@@ -208,5 +310,7 @@ export const nutritionAPI = {
 export default {
   auth: authAPI,
   workouts: workoutsAPI,
-  nutrition: nutritionAPI
+  nutrition: nutritionAPI,
+  schedule: scheduleAPI,
+  mealPlan: mealPlanAPI
 };

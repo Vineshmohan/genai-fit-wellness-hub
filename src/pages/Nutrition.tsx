@@ -1,503 +1,254 @@
+
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Apple, Coffee, ShoppingBag, Utensils, Plus } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-import { useFoodLog } from '@/hooks/useFoodLog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Trash2, Plus, Download } from "lucide-react";
 import FoodLogForm from '@/components/FoodLogForm';
+import { useFoodLog, FoodItem } from '@/hooks/useFoodLog';
+import { useToast } from '@/hooks/use-toast';
+import { downloadFoodLogReport } from '@/utils/reportUtils';
 
-const NutritionPage = () => {
+// Helper to calculate daily totals
+const calculateDailyTotals = (items: FoodItem[]) => {
+  return items.reduce((acc, item) => {
+    return {
+      calories: acc.calories + item.calories,
+      protein: acc.protein + item.protein,
+      carbs: acc.carbs + item.carbs,
+      fat: acc.fat + item.fat
+    };
+  }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+};
+
+// Component to display nutrition macros
+const MacroDisplay = ({ title, value, unit }: { title: string, value: number, unit: string }) => (
+  <div className="text-center">
+    <p className="text-lg font-bold">{value.toFixed(1)}{unit}</p>
+    <p className="text-sm text-gray-500">{title}</p>
+  </div>
+);
+
+const Nutrition = () => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const { foodItems, isLoading, error, addFoodItem, removeFoodItem, clearFoodLog } = useFoodLog();
   const { toast } = useToast();
-  const [showFoodLog, setShowFoodLog] = useState(false);
-  const { foodItems, addFoodItem } = useFoodLog();
   
-  const [dailyNutrition, setDailyNutrition] = useState({
-    calories: {
-      consumed: 1350,
-      goal: 2200
-    },
-    protein: {
-      consumed: 85,
-      goal: 120
-    },
-    carbs: {
-      consumed: 160,
-      goal: 240
-    },
-    fat: {
-      consumed: 45,
-      goal: 70
+  // Group food items by meal type
+  const groupedFoodItems = foodItems.reduce((acc: Record<string, FoodItem[]>, item) => {
+    if (!acc[item.mealType]) {
+      acc[item.mealType] = [];
     }
-  });
-
-  const handleAddFood = (food: any) => {
-    addFoodItem(food);
-    
-    setDailyNutrition(prev => ({
-      calories: {
-        consumed: prev.calories.consumed + food.calories,
-        goal: prev.calories.goal
-      },
-      protein: {
-        consumed: prev.protein.consumed + food.protein,
-        goal: prev.protein.goal
-      },
-      carbs: {
-        consumed: prev.carbs.consumed + food.carbs,
-        goal: prev.carbs.goal
-      },
-      fat: {
-        consumed: prev.fat.consumed + food.fat,
-        goal: prev.fat.goal
-      }
-    }));
-    
-    toast({
-      title: "Food logged successfully",
-      description: `Added ${food.name} to your nutrition log`,
-    });
-  };
-
-  const recommendedMeals = [
-    {
-      title: "Greek Yogurt with Berries",
-      calories: 250,
-      protein: 20,
-      carbs: 25,
-      fat: 8,
-      time: "Breakfast",
-      ingredients: ["Greek yogurt", "Mixed berries", "Honey", "Almonds"]
-    },
-    {
-      title: "Grilled Chicken Salad",
-      calories: 380,
-      protein: 40,
-      carbs: 15,
-      fat: 18,
-      time: "Lunch",
-      ingredients: ["Grilled chicken breast", "Mixed greens", "Cucumber", "Cherry tomatoes", "Olive oil", "Balsamic vinegar"]
-    },
-    {
-      title: "Salmon with Roasted Vegetables",
-      calories: 520,
-      protein: 38,
-      carbs: 25,
-      fat: 28,
-      time: "Dinner",
-      ingredients: ["Salmon fillet", "Broccoli", "Bell peppers", "Carrots", "Olive oil", "Garlic", "Herbs"]
-    },
-    {
-      title: "Protein Smoothie",
-      calories: 220,
-      protein: 25,
-      carbs: 20,
-      fat: 5,
-      time: "Snack",
-      ingredients: ["Protein powder", "Banana", "Almond milk", "Spinach", "Chia seeds"]
+    acc[item.mealType].push(item);
+    return acc;
+  }, {});
+  
+  // Calculate daily totals
+  const dailyTotals = calculateDailyTotals(foodItems);
+  
+  const handleAddFood = async (item: FoodItem) => {
+    const success = await addFoodItem(item);
+    if (success) {
+      toast({
+        title: "Food added",
+        description: `${item.name} added to your food log`,
+      });
+      setShowAddForm(false);
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add food item",
+        variant: "destructive",
+      });
     }
-  ];
-
-  const groceryItems = [
-    { name: "Chicken breast", category: "Protein", quantity: "1 lb" },
-    { name: "Salmon fillets", category: "Protein", quantity: "2 fillets" },
-    { name: "Greek yogurt", category: "Dairy", quantity: "32 oz" },
-    { name: "Eggs", category: "Protein", quantity: "1 dozen" },
-    { name: "Spinach", category: "Vegetables", quantity: "1 bag" },
-    { name: "Sweet potatoes", category: "Vegetables", quantity: "3 medium" },
-    { name: "Quinoa", category: "Grains", quantity: "1 cup" },
-    { name: "Berries", category: "Fruits", quantity: "1 container" },
-    { name: "Almonds", category: "Nuts", quantity: "1 cup" },
-    { name: "Olive oil", category: "Oils", quantity: "As needed" }
-  ];
-
-  const getTodaysDate = () => {
-    return new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+  };
+  
+  const handleRemoveFood = async (id: string) => {
+    const success = await removeFoodItem(id);
+    if (success) {
+      toast({
+        title: "Food removed",
+        description: "Item removed from your food log",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to remove food item",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleClearLog = async () => {
+    const success = await clearFoodLog();
+    if (success) {
+      toast({
+        title: "Food log cleared",
+        description: "All items have been removed from your food log",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to clear food log",
+        variant: "destructive",
+      });
+    }
   };
 
-  const calculatePercentage = (consumed: number, goal: number) => {
-    return Math.min(Math.round((consumed / goal) * 100), 100);
+  const handleDownloadReport = async () => {
+    const success = await downloadFoodLogReport();
+    if (success) {
+      toast({
+        title: "Report downloaded",
+        description: "Your food log report has been downloaded",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to download report",
+        variant: "destructive",
+      });
+    }
   };
-
-  const downloadShoppingList = () => {
-    let content = "GenAI-Fit Shopping List\n\n";
-    
-    const categories = [...new Set(groceryItems.map(item => item.category))];
-    
-    categories.forEach(category => {
-      content += `${category}:\n`;
-      
-      groceryItems
-        .filter(item => item.category === category)
-        .forEach(item => {
-          content += `- ${item.name}: ${item.quantity}\n`;
-        });
-      
-      content += '\n';
-    });
-    
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `genaifit-shopping-list-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Shopping List Downloaded",
-      description: "Your shopping list has been downloaded as a text file",
-    });
-  };
-
+  
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Nutrition Planner</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">Personalized for your goals</p>
-          </div>
-          <Button 
-            className="mt-4 sm:mt-0 bg-nutrition-500 hover:bg-nutrition-600"
-            onClick={() => setShowFoodLog(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Log Food
-          </Button>
-        </div>
-
-        {showFoodLog && (
-          <div className="mb-8">
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle>Log Your Food</CardTitle>
-                <CardDescription>Track your nutrition intake</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FoodLogForm onSubmit={handleAddFood} onClose={() => setShowFoodLog(false)} />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md font-medium">Calories</CardTitle>
-              <CardDescription>{dailyNutrition.calories.consumed} / {dailyNutrition.calories.goal} kcal</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress 
-                value={calculatePercentage(dailyNutrition.calories.consumed, dailyNutrition.calories.goal)} 
-                className="h-2 bg-gray-200" 
-              />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {dailyNutrition.calories.goal - dailyNutrition.calories.consumed} kcal remaining
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md font-medium">Protein</CardTitle>
-              <CardDescription>{dailyNutrition.protein.consumed} / {dailyNutrition.protein.goal} g</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress 
-                value={calculatePercentage(dailyNutrition.protein.consumed, dailyNutrition.protein.goal)} 
-                className="h-2 bg-gray-200" 
-              />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {dailyNutrition.protein.goal - dailyNutrition.protein.consumed} g remaining
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md font-medium">Carbs</CardTitle>
-              <CardDescription>{dailyNutrition.carbs.consumed} / {dailyNutrition.carbs.goal} g</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress 
-                value={calculatePercentage(dailyNutrition.carbs.consumed, dailyNutrition.carbs.goal)} 
-                className="h-2 bg-gray-200" 
-              />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {dailyNutrition.carbs.goal - dailyNutrition.carbs.consumed} g remaining
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md font-medium">Fat</CardTitle>
-              <CardDescription>{dailyNutrition.fat.consumed} / {dailyNutrition.fat.goal} g</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress 
-                value={calculatePercentage(dailyNutrition.fat.consumed, dailyNutrition.fat.goal)} 
-                className="h-2 bg-gray-200" 
-              />
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {dailyNutrition.fat.goal - dailyNutrition.fat.consumed} g remaining
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-2 shadow-md">
-            <CardHeader>
-              <CardTitle>Today's Meal Plan</CardTitle>
-              <CardDescription>{getTodaysDate()}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="recommended">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="recommended">Recommended</TabsTrigger>
-                  <TabsTrigger value="logged">Your Logged Food</TabsTrigger>
+    <div className="container mx-auto px-4 py-24 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Nutrition Tracker</h1>
+        <p className="text-gray-600 dark:text-gray-400">Track your daily food intake and macronutrients</p>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Daily Summary */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Daily Summary</CardTitle>
+            <CardDescription>Your nutritional intake today</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <MacroDisplay title="Calories" value={dailyTotals.calories} unit="kcal" />
+              <MacroDisplay title="Protein" value={dailyTotals.protein} unit="g" />
+              <MacroDisplay title="Carbs" value={dailyTotals.carbs} unit="g" />
+              <MacroDisplay title="Fat" value={dailyTotals.fat} unit="g" />
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button 
+              variant="outline" 
+              className="text-red-500" 
+              onClick={handleClearLog}
+              disabled={isLoading || foodItems.length === 0}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear Log
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadReport}
+              disabled={isLoading || foodItems.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* Food Log */}
+        <Card className="col-span-1 lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Food Log</CardTitle>
+              <CardDescription>What you've eaten today</CardDescription>
+            </div>
+            <Button 
+              onClick={() => setShowAddForm(!showAddForm)}
+              disabled={isLoading}
+            >
+              {showAddForm ? 'Cancel' : <><Plus className="mr-2 h-4 w-4" /> Add Food</>}
+            </Button>
+          </CardHeader>
+          
+          <CardContent>
+            {showAddForm ? (
+              <FoodLogForm onSubmit={handleAddFood} onCancel={() => setShowAddForm(false)} />
+            ) : (
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="mb-4 w-full justify-start">
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="Breakfast">Breakfast</TabsTrigger>
+                  <TabsTrigger value="Lunch">Lunch</TabsTrigger>
+                  <TabsTrigger value="Dinner">Dinner</TabsTrigger>
+                  <TabsTrigger value="Snack">Snack</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="recommended">
-                  <div className="space-y-4">
-                    {recommendedMeals.map((meal, index) => (
-                      <div key={index} className="flex p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div className="rounded-full w-10 h-10 flex items-center justify-center mr-3 bg-nutrition-100 text-nutrition-600">
-                          <Utensils className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                            <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">{meal.title}</h4>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">{meal.time}</span>
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                {meal.ingredients.join(", ")}
-                              </div>
-                            </div>
-                            <span className="font-medium text-gray-900 dark:text-white mt-2 sm:mt-0">{meal.calories} cal</span>
-                          </div>
-                          <div className="flex space-x-3 mt-2">
-                            <div className="text-xs">
-                              <span className="text-red-500 font-medium">{meal.protein}g</span>
-                              <span className="text-gray-500 dark:text-gray-400"> protein</span>
-                            </div>
-                            <div className="text-xs">
-                              <span className="text-blue-500 font-medium">{meal.carbs}g</span>
-                              <span className="text-gray-500 dark:text-gray-400"> carbs</span>
-                            </div>
-                            <div className="text-xs">
-                              <span className="text-yellow-500 font-medium">{meal.fat}g</span>
-                              <span className="text-gray-500 dark:text-gray-400"> fat</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="logged">
-                  {foodItems.length > 0 ? (
+                <TabsContent value="all">
+                  {isLoading ? (
+                    <p className="text-center py-8">Loading food log...</p>
+                  ) : foodItems.length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">No food items logged today. Add some food to get started!</p>
+                  ) : (
                     <div className="space-y-4">
-                      {foodItems.map((item, idx) => (
-                        <div key={idx} className="flex p-3 rounded-lg border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20">
-                          <div className="rounded-full w-10 h-10 flex items-center justify-center mr-3 bg-green-100 text-green-600">
-                            <Utensils className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">{item.mealType}</span>
+                      {Object.entries(groupedFoodItems).map(([mealType, items]) => (
+                        <div key={mealType}>
+                          <h3 className="font-medium text-lg mb-2">{mealType}</h3>
+                          <div className="space-y-2">
+                            {items.map(item => (
+                              <div key={item._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-sm text-gray-500">{item.calories} kcal | P: {item.protein}g | C: {item.carbs}g | F: {item.fat}g</p>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => item._id && handleRemoveFood(item._id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
                               </div>
-                              <span className="font-medium text-gray-900 dark:text-white">{item.calories} cal</span>
-                            </div>
-                            <div className="flex space-x-3 mt-2">
-                              <div className="text-xs">
-                                <span className="text-red-500 font-medium">{item.protein}g</span>
-                                <span className="text-gray-500 dark:text-gray-400"> protein</span>
-                              </div>
-                              <div className="text-xs">
-                                <span className="text-blue-500 font-medium">{item.carbs}g</span>
-                                <span className="text-gray-500 dark:text-gray-400"> carbs</span>
-                              </div>
-                              <div className="text-xs">
-                                <span className="text-yellow-500 font-medium">{item.fat}g</span>
-                                <span className="text-gray-500 dark:text-gray-400"> fat</span>
-                              </div>
-                            </div>
+                            ))}
                           </div>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Utensils className="h-10 w-10 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No food logged today</p>
-                      <Button 
-                        className="mt-4 bg-nutrition-500 hover:bg-nutrition-600"
-                        onClick={() => setShowFoodLog(true)}
-                      >
-                        Log Food Now
-                      </Button>
-                    </div>
                   )}
                 </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Grocery List</span>
-                <ShoppingBag className="h-5 w-5 text-nutrition-500" />
-              </CardTitle>
-              <CardDescription>Recommended items for your meal plan</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {["Protein", "Vegetables", "Fruits", "Other"].map((category) => (
-                  <div key={category}>
-                    <h3 className="text-sm font-semibold mb-2">{category}</h3>
-                    <div className="space-y-2">
-                      {groceryItems
-                        .filter(item => item.category === category || (category === "Other" && !["Protein", "Vegetables", "Fruits"].includes(item.category)))
-                        .map((item, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
-                            <div className="flex items-center">
-                              <div className={`w-2 h-2 rounded-full mr-2 ${
-                                item.category === "Protein" ? "bg-red-500" :
-                                item.category === "Vegetables" ? "bg-green-500" :
-                                item.category === "Fruits" ? "bg-yellow-500" :
-                                item.category === "Dairy" ? "bg-blue-500" :
-                                "bg-gray-500"
-                              }`}></div>
-                              <span className="text-sm">{item.name}</span>
+                
+                {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map((mealType) => (
+                  <TabsContent key={mealType} value={mealType}>
+                    {isLoading ? (
+                      <p className="text-center py-8">Loading food log...</p>
+                    ) : !groupedFoodItems[mealType] || groupedFoodItems[mealType].length === 0 ? (
+                      <p className="text-center py-8 text-gray-500">No {mealType.toLowerCase()} items logged today.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {groupedFoodItems[mealType].map(item => (
+                          <div key={item._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                              <p className="text-sm text-gray-500">{item.calories} kcal | P: {item.protein}g | C: {item.carbs}g | F: {item.fat}g</p>
                             </div>
-                            <span className="text-xs text-gray-500">{item.quantity}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => item._id && handleRemoveFood(item._id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
                           </div>
                         ))}
-                    </div>
-                  </div>
+                      </div>
+                    )}
+                  </TabsContent>
                 ))}
-                <Button className="w-full" variant="outline" onClick={downloadShoppingList}>
-                  Download Shopping List
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Weekly Meal Planner</CardTitle>
-              <CardDescription>View and plan your meals for the week</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Tomorrow</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <Coffee className="h-4 w-4 mr-2 text-nutrition-500" />
-                      <span className="text-sm">Protein Oatmeal with Blueberries</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Utensils className="h-4 w-4 mr-2 text-nutrition-500" />
-                      <span className="text-sm">Turkey & Avocado Wrap</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Utensils className="h-4 w-4 mr-2 text-nutrition-500" />
-                      <span className="text-sm">Baked Cod with Quinoa & Veggies</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Day After Tomorrow</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <Coffee className="h-4 w-4 mr-2 text-nutrition-500" />
-                      <span className="text-sm">Greek Yogurt Parfait</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Utensils className="h-4 w-4 mr-2 text-nutrition-500" />
-                      <span className="text-sm">Chicken Caesar Salad</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Utensils className="h-4 w-4 mr-2 text-nutrition-500" />
-                      <span className="text-sm">Stir-Fry Tofu with Brown Rice</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  className="w-full" 
-                  variant="outline"
-                  onClick={() => window.location.href = '/meal-planner'}
-                >
-                  View Full Week
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Nutrition Tips</CardTitle>
-              <CardDescription>Personalized for your goals</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-3 rounded-lg bg-nutrition-50 dark:bg-nutrition-900/20 border border-nutrition-100 dark:border-nutrition-900">
-                  <h3 className="flex items-center font-medium text-nutrition-700 dark:text-nutrition-300 mb-1">
-                    <Apple className="h-4 w-4 mr-2" />
-                    Meal Timing
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Based on your workout schedule, try consuming a protein-rich meal within 30 minutes after your strength training sessions to maximize recovery.
-                  </p>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-nutrition-50 dark:bg-nutrition-900/20 border border-nutrition-100 dark:border-nutrition-900">
-                  <h3 className="flex items-center font-medium text-nutrition-700 dark:text-nutrition-300 mb-1">
-                    <Apple className="h-4 w-4 mr-2" />
-                    Hydration
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    You're currently averaging 5 glasses of water daily. Try increasing to 8 glasses to support your metabolism and workout performance.
-                  </p>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-nutrition-50 dark:bg-nutrition-900/20 border border-nutrition-100 dark:border-nutrition-900">
-                  <h3 className="flex items-center font-medium text-nutrition-700 dark:text-nutrition-300 mb-1">
-                    <Apple className="h-4 w-4 mr-2" />
-                    Macronutrient Balance
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Your current protein intake is slightly below your goal. Consider adding more lean protein sources like chicken, fish, or plant-based alternatives to support muscle recovery.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
 
-export default NutritionPage;
+export default Nutrition;
