@@ -1,18 +1,6 @@
 
-import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
-
-// This would come from environment variables in a real app
-const MONGODB_URI = "mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority";
-const DB_NAME = "genai_fit";
-
-// Create a MongoClient instance
-const client = new MongoClient(MONGODB_URI, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+// MongoDB simulation service for browser environment
+import { v4 as uuidv4 } from 'uuid';
 
 // Database collections
 export enum Collections {
@@ -23,22 +11,7 @@ export enum Collections {
   SCHEDULES = "schedules",
 }
 
-// Connect to MongoDB
-async function connectDB() {
-  try {
-    // For demo purposes, we're using simulated connection
-    // In production, you would actually connect:
-    // await client.connect();
-    console.log("Simulated MongoDB connection successful");
-    return client.db(DB_NAME);
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-    // Fallback to mock data
-    return null;
-  }
-}
-
-// MongoDB service with simulated connection for demo
+// MongoDB service with simulated connection for browser
 export const mongoDBService = {
   // Get collection data (simulated)
   getCollection: async (collectionName: Collections) => {
@@ -62,7 +35,7 @@ export const mongoDBService = {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Add _id to simulate MongoDB document
-      const newDoc = { ...document, _id: new ObjectId().toString() };
+      const newDoc = { ...document, _id: uuidv4() };
       
       // Save to localStorage for simulation
       const existingData = localStorage.getItem(collectionName) || "[]";
@@ -109,7 +82,7 @@ export const mongoDBService = {
       const filteredData = parsedData.filter((item: any) => item._id !== id);
       
       localStorage.setItem(collectionName, JSON.stringify(filteredData));
-      return { success: true };
+      return { success: true, data: filteredData };
     } catch (error) {
       console.error(`Error deleting from ${collectionName}:`, error);
       return { success: false, message: `Failed to delete from ${collectionName}` };
