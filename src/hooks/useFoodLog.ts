@@ -25,7 +25,7 @@ export const useFoodLog = () => {
       try {
         const response = await nutritionAPI.getFoodLog();
         if (response.success) {
-          setFoodItems(response.data);
+          setFoodItems(response.data || []);
           setError(null);
         } else {
           setError(response.message || 'Failed to load food log');
@@ -45,7 +45,7 @@ export const useFoodLog = () => {
   const addFoodItem = async (item: FoodItem) => {
     try {
       const response = await nutritionAPI.addFoodItem(item);
-      if (response.success) {
+      if (response.success && response.data) {
         setFoodItems(response.data);
         return true;
       } else {
@@ -61,7 +61,7 @@ export const useFoodLog = () => {
   const removeFoodItem = async (id: string) => {
     try {
       const response = await nutritionAPI.removeFoodItem(id);
-      if (response.success) {
+      if (response.success && response.data) {
         setFoodItems(response.data);
         return true;
       } else {

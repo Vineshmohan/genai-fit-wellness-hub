@@ -15,10 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface FoodLogFormProps {
   onSubmit: (food: FoodItem) => void;
-  onClose: () => void;
+  onCancel: () => void;
 }
 
-const FoodLogForm = ({ onSubmit, onClose }: FoodLogFormProps) => {
+const FoodLogForm = ({ onSubmit, onCancel }: FoodLogFormProps) => {
   const { toast } = useToast();
   const [food, setFood] = useState<FoodItem>({
     name: '',
@@ -65,11 +65,6 @@ const FoodLogForm = ({ onSubmit, onClose }: FoodLogFormProps) => {
     }
 
     onSubmit(food);
-    toast({
-      title: "Food logged successfully",
-      description: `Added ${food.name} to your food log`,
-    });
-    onClose();
   };
 
   return (
@@ -162,7 +157,7 @@ const FoodLogForm = ({ onSubmit, onClose }: FoodLogFormProps) => {
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" type="button" onClick={onClose}>
+        <Button variant="outline" type="button" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">Save Food</Button>
