@@ -8,7 +8,7 @@ import { Activity, Award, Database, Download, Dumbbell, FileText, MessageSquare,
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import FoodLogForm from '@/components/FoodLogForm';
-import { useFoodLog } from '@/hooks/useFoodLog';
+import { useFoodLog, FoodItem } from '@/hooks/useFoodLog';
 
 const mockWeightData = [
   { day: 'Mon', weight: 85.3 },
