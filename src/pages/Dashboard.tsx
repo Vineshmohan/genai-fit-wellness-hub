@@ -102,6 +102,23 @@ const Dashboard = () => {
     }
   };
 
+  const handleAddFood = async (item: FoodItem) => {
+    const success = await addFoodItem(item);
+    if (success) {
+      toast({
+        title: "Food added",
+        description: `${item.name} added to your food log`,
+      });
+      setShowFoodLog(false);
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add food item",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
@@ -191,7 +208,10 @@ const Dashboard = () => {
                 <CardDescription>Track your nutrition intake</CardDescription>
               </CardHeader>
               <CardContent>
-                <FoodLogForm onSubmit={addFoodItem} onClose={() => setShowFoodLog(false)} />
+                <FoodLogForm 
+                  onSubmit={handleAddFood} 
+                  onCancel={() => setShowFoodLog(false)} 
+                />
               </CardContent>
             </Card>
           </div>
@@ -416,9 +436,12 @@ const Dashboard = () => {
                       <Dumbbell className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{workout.title}</h4>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{workout.duration}</span>
+                      <div className="flex justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white">{workout.title}</h4>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{workout.duration}</span>
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">{workout.calories} cal</span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
                         <span className="text-xs text-gray-500 dark:text-gray-400">{workout.calories} cal</span>

@@ -17,38 +17,38 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import Schedule from "./pages/Schedule";
 import MealPlanner from "./pages/MealPlanner";
+import { useState } from "react";
 
-const queryClient = new QueryClient();
+const App = () => {
+  // Create a new QueryClient instance inside the component
+  const [queryClient] = useState(() => new QueryClient());
 
-const AppWithProviders = () => (
-  <AuthProvider>
-    <Navbar />
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/profile-setup" element={<ProfileSetup />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/workouts" element={<Workouts />} />
-      <Route path="/nutrition" element={<Nutrition />} />
-      <Route path="/schedule" element={<Schedule />} />
-      <Route path="/meal-planner" element={<MealPlanner />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-    <Footer />
-  </AuthProvider>
-);
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppWithProviders />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/profile-setup" element={<ProfileSetup />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/workouts" element={<Workouts />} />
+              <Route path="/nutrition" element={<Nutrition />} />
+              <Route path="/schedule" element={<Schedule />} />
+              <Route path="/meal-planner" element={<MealPlanner />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Footer />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
