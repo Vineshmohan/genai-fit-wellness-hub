@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { authAPI } from '@/services/api';
 
 const SignUp = () => {
   const [name, setName] = useState('');
@@ -43,15 +44,23 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Real signup with database storage
+      const response = await authAPI.signup(name, email, password);
       
-      toast({
-        title: "Account created",
-        description: "Welcome to GenAI-Fit! Let's set up your profile.",
-      });
-      
-      navigate('/profile-setup');
+      if (response.success) {
+        toast({
+          title: "Account created",
+          description: "Welcome to GenAI-Fit! Let's set up your profile.",
+        });
+        
+        navigate('/profile-setup');
+      } else {
+        toast({
+          title: "Sign up failed",
+          description: response.message || "Please try again later",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Sign up failed",

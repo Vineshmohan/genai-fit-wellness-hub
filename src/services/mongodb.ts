@@ -1,4 +1,3 @@
-
 // MongoDB simulation service for browser environment
 import { v4 as uuidv4 } from 'uuid';
 

@@ -33,6 +33,8 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       
       if (isLoggedIn) {
         // In a real app, we would make an API call to get user data using the token
+        // For this demo, we'll simulate this with a mock user
+        // In a real app with JWT, you'd decode the token or make an API call to get the user info
         setUser({ 
           id: 1, 
           email: 'demo@genaifit.com', 

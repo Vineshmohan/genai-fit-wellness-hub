@@ -1,4 +1,3 @@
-
 // GenAI-Fit API service
 // This simulates a real backend but uses MongoDB service
 import { mongoDBService, Collections } from './mongodb';
@@ -14,6 +13,18 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Initialize database collections
 const initializeCollections = async () => {
+  // Check if users collection exists, if not, create with mock data
+  const usersResult = await mongoDBService.getCollection(Collections.USERS);
+  if (usersResult.success && Array.isArray(usersResult.data) && usersResult.data.length === 0) {
+    // Initialize with mock user
+    await mongoDBService.insertDocument(Collections.USERS, { 
+      id: 1, 
+      email: 'demo@genaifit.com', 
+      password: 'password123', 
+      name: 'Demo User' 
+    });
+  }
+
   // Check if workouts collection exists, if not, create with mock data
   const workoutsResult = await mongoDBService.getCollection(Collections.WORKOUTS);
   if (workoutsResult.success && Array.isArray(workoutsResult.data) && workoutsResult.data.length === 0) {
@@ -75,7 +86,13 @@ export const authAPI = {
   login: async (email: string, password: string) => {
     await delay(800); // Simulate network delay
     
-    const user = mockUsers.find(u => u.email === email && u.password === password);
+    // Get users from database
+    const usersResult = await mongoDBService.getCollection(Collections.USERS);
+    if (!usersResult.success) {
+      return { success: false, message: 'Failed to fetch users' };
+    }
+    
+    const user = usersResult.data.find((u: any) => u.email === email && u.password === password);
     
     if (user) {
       isAuthenticated = true;
@@ -84,6 +101,43 @@ export const authAPI = {
     }
     
     return { success: false, message: 'Invalid credentials' };
+  },
+  
+  signup: async (name: string, email: string, password: string) => {
+    await delay(800); // Simulate network delay
+    
+    // Check if email already exists
+    const usersResult = await mongoDBService.getCollection(Collections.USERS);
+    if (!usersResult.success) {
+      return { success: false, message: 'Failed to check existing users' };
+    }
+    
+    const existingUser = usersResult.data.find((u: any) => u.email === email);
+    if (existingUser) {
+      return { success: false, message: 'Email already in use' };
+    }
+    
+    // Create a new user
+    const newUser = {
+      id: Date.now(), // Simple way to generate unique IDs
+      email,
+      password,
+      name
+    };
+    
+    // Store in database
+    const result = await mongoDBService.insertDocument(Collections.USERS, newUser);
+    if (!result.success) {
+      return { success: false, message: 'Failed to create user account' };
+    }
+    
+    isAuthenticated = true;
+    localStorage.setItem('auth_token', 'mock_jwt_token');
+    
+    return { 
+      success: true, 
+      user: { id: newUser.id, email: newUser.email, name: newUser.name } 
+    };
   },
   
   logout: async () => {
